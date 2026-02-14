@@ -195,29 +195,50 @@ button:hover {
   </div>
 
 <script>
+  
 const noBtn = document.getElementById('noBtn');
 
+// === КНОПКА УБЕГАЕТ ПРИ ЛЮБОМ ДВИЖЕНИИ МЫШИ/ПАЛЬЦА ===
 function moveNo() {
-  const offsetX = Math.random() * 260 - 130;
-  const offsetY = Math.random() * 160 - 80;
+  const maxX = window.innerWidth * 0.3; // Чтобы не улетала за экран
+  const maxY = window.innerHeight * 0.2;
+  
+  let offsetX = (Math.random() * 260 - 130) * 1.5;
+  let offsetY = (Math.random() * 160 - 80) * 1.5;
+  
+  // Ограничиваем, чтобы кнопка не пропадала с экрана
+  offsetX = Math.max(-maxX, Math.min(maxX, offsetX));
+  offsetY = Math.max(-maxY, Math.min(maxY, offsetY));
+  
   noBtn.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+  noBtn.style.transition = 'transform 0.2s ease';
 }
 
-// Для компьютера (наведение)
-noBtn.addEventListener('mouseenter', moveNo);
-
-// Для телефона (касание)
-noBtn.addEventListener('touchstart', function(e) {
-  e.preventDefault();  // ОБЯЗАТЕЛЬНО!
-  moveNo();
+// Для компьютера - реагирует на движение мыши ГДЕ УГОДНО
+document.addEventListener('mousemove', function() {
+  // Проверяем, что первая страница еще открыта
+  if (document.getElementById('page1').style.display !== 'none') {
+    moveNo();
+  }
 });
 
-// Для телефона (клик - на всякий случай)
-noBtn.addEventListener('click', function(e) {
-  e.preventDefault();
-  moveNo();
+// Для телефона - реагирует на касание ГДЕ УГОДНО
+document.addEventListener('touchstart', function(e) {
+  if (document.getElementById('page1').style.display !== 'none') {
+    e.preventDefault();
+    moveNo();
+  }
 });
 
+// Чтобы кнопка не убегала слишком часто, добавим небольшую задержку
+let canMove = true;
+document.addEventListener('mousemove', function() {
+  if (canMove && document.getElementById('page1').style.display !== 'none') {
+    canMove = false;
+    moveNo();
+    setTimeout(() => canMove = true, 150); // Можно трогать раз в 150мс
+  }
+});
 // === PAGE SWITCH ===
 function goNext() {
   const page1 = document.getElementById('page1');
