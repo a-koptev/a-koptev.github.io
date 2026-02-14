@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Любимке</title>
+  <title>Любимке ❤️</title>
   <style>
 * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
 
@@ -212,71 +212,51 @@ button:hover {
 const noBtn = document.getElementById('noBtn');
 const page1 = document.getElementById('page1');
 
-// === УБЕГАЮЩАЯ КНОПКА (РАБОТАЕТ ВЕЗДЕ: ТГ, iPhone, Android, ПК) ===
+// === ПРОСТАЯ И НАДЕЖНАЯ ФУНКЦИЯ ===
 function moveNo() {
-  // Проверяем, что первая страница еще открыта
+  // Если первая страница скрыта - не двигаем кнопку
   if (page1.style.display === 'none') return;
   
-  // Случайное смещение
-  let offsetX = Math.random() * 260 - 130;
-  let offsetY = Math.random() * 160 - 80;
+  // Случайные координаты в пределах экрана
+  const x = Math.random() * (window.innerWidth - 150);
+  const y = Math.random() * (window.innerHeight - 100);
   
-  // Для телефонов делаем движение поменьше
-  if (window.innerWidth <= 768) {
-    offsetX = Math.random() * 140 - 70;
-    offsetY = Math.random() * 100 - 50;
-  }
-  
-  noBtn.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-  noBtn.style.transition = 'transform 0.2s ease';
+  // Применяем новую позицию
+  noBtn.style.position = 'fixed';
+  noBtn.style.left = x + 'px';
+  noBtn.style.top = y + 'px';
+  noBtn.style.transform = 'none'; // убираем translate
 }
 
-// Добавляем ВСЕ возможные события для кнопки
-noBtn.addEventListener('mouseover', moveNo);     // для ПК
-noBtn.addEventListener('mouseenter', moveNo);    // для ПК (дубль)
-noBtn.addEventListener('touchstart', function(e) {  // для телефонов и ТГ
-  e.preventDefault();  // ОБЯЗАТЕЛЬНО для Telegram
-  e.stopPropagation();
+// === ДЛЯ КОМПЬЮТЕРА ===
+noBtn.addEventListener('mouseenter', moveNo);
+
+// === ДЛЯ ТЕЛЕФОНА (И ТЕЛЕГРАМА) ===
+noBtn.addEventListener('touchstart', function(e) {
+  e.preventDefault(); // критично важно для Telegram
   moveNo();
 });
-noBtn.addEventListener('click', function(e) {    // на всякий случай
+
+// === ДЛЯ ВСЕХ СЛУЧАЕВ ===
+noBtn.addEventListener('click', function(e) {
   e.preventDefault();
   moveNo();
 });
 
-// Дополнительно: обрабатываем касания на документе, если кнопка "потерялась"
-document.addEventListener('touchstart', function(e) {
-  // Проверяем, что нажали не на кнопку (чтобы не дублировать)
-  if (e.target !== noBtn && page1.style.display !== 'none') {
-    // Если кнопка далеко, придвигаем её поближе к месту касания? 
-    // Но для вашего случая - просто возвращаем в центр
-    setTimeout(() => {
-      if (Math.random() > 0.7) { // иногда возвращаем
-        noBtn.style.transform = 'translate(0, 0)';
-      }
-    }, 300);
-  }
-});
-
 // === PAGE SWITCH ===
 function goNext() {
-  const page1 = document.getElementById('page1');
-  const page2 = document.getElementById('page2');
-
   page1.classList.add('fade-out');
   heartBoost = true;
 
   setTimeout(() => {
     page1.style.display = 'none';
-    page2.style.display = 'block';
+    document.getElementById('page2').style.display = 'block';
     typeText();
-    
-    // Прячем кнопку "Нет" на второй странице (на всякий случай)
-    noBtn.style.display = 'none';
+    noBtn.style.display = 'none'; // прячем кнопку "Нет"
   }, 600);
 }
 
-// === FLOATING HEARTS GENERATOR ===
+// === ОСТАЛЬНОЙ КОД БЕЗ ИЗМЕНЕНИЙ ===
 let heartBoost = false;
 
 setInterval(() => {
@@ -287,7 +267,6 @@ setInterval(() => {
   heart.style.fontSize = (heartBoost ? 30 : 22) + 'px';
   heart.style.animationDuration =
     (heartBoost ? 2 : 4) + Math.random() * 2 + 's';
-
   document.body.appendChild(heart);
   setTimeout(() => heart.remove(), 7000);
 }, 300);
@@ -305,23 +284,12 @@ function typeText() {
     i++;
     if (i >= text.length) {
       clearInterval(interval);
-      setTimeout(showFinale, 1200);
+      setTimeout(() => {
+        document.getElementById('finale').classList.add('show');
+      }, 1200);
     }
   }, 60);
 }
-
-function showFinale() {
-  document.getElementById('finale').classList.add('show');
-}
-
-// Добавим обработчик resize для коррекции позиции кнопки
-window.addEventListener('resize', function() {
-  if (page1.style.display !== 'none') {
-    // Возвращаем кнопку в исходное положение при изменении размера окна
-    noBtn.style.transform = 'translate(0, 0)';
-  }
-});
-
 </script>
 </body>
 </html>
