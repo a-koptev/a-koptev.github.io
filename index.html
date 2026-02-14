@@ -65,7 +65,7 @@ body {
     transform: scale(0.8);
     opacity: 0;
   }
- 100% {
+  100% {
     transform: scale(1);
     opacity: 1;
   }
@@ -86,17 +86,17 @@ h2 {
   font-weight: 500;
 }
 
-/* КОНТЕЙНЕР КНОПОК - ОТНОСИТЕЛЬНОЕ ПОЗИЦИОНИРОВАНИЕ */
+/* КОНТЕЙНЕР КНОПОК */
 .buttons {
   display: flex;
-  gap: 24px;
   justify-content: center;
   align-items: center;
   min-height: 70px;
-  position: relative; /* Важно для правильного позиционирования */
+  position: relative;
+  gap: 20px; /* Расстояние между кнопками */
 }
 
-/* КНОПКА ДА - СТАТИЧНАЯ */
+/* КНОПКА ДА - СТАТИЧНАЯ, В ПОТОКЕ */
 .yes {
   width: 140px;
   height: 54px;
@@ -110,8 +110,9 @@ h2 {
   box-shadow: 0 10px 25px #ff3b7d80;
   transition: all 0.25s ease;
   letter-spacing: 0.5px;
-  position: relative; /* Остается в потоке */
+  position: relative; /* Обычный поток */
   z-index: 10;
+  flex-shrink: 0; /* Не сжимается */
 }
 
 .yes:hover {
@@ -119,9 +120,8 @@ h2 {
   transform: translateY(-3px);
 }
 
-/* КНОПКА НЕТ - АБСОЛЮТНОЕ ПОЗИЦИОНИРОВАНИЕ ОТНОСИТЕЛЬНО КОНТЕЙНЕРА */
+/* КНОПКА НЕТ - ТОЖЕ В ПОТОКЕ, НО БУДЕТ УБЕГАТЬ ЧЕРЕЗ JS */
 #noBtn {
-  position: absolute !important;
   width: 140px;
   height: 54px;
   border-radius: 999px;
@@ -134,12 +134,10 @@ h2 {
   border: 2px solid #ffb6c1;
   box-shadow: 0 8px 20px rgba(0,0,0,0.2);
   letter-spacing: 0.5px;
-  transition: left 0.2s ease, top 0.2s ease, transform 0.15s ease !important;
-  z-index: 20;
-  left: auto; /* Сброс */
-  right: auto;
-  top: auto;
-  bottom: auto;
+  transition: all 0.2s ease;
+  position: relative; /* Обычный поток */
+  z-index: 10;
+  flex-shrink: 0; /* Не сжимается */
 }
 
 /* ПОЛЯРОИДНЫЕ ФОТО */
@@ -242,13 +240,20 @@ h2 {
   
   .final-text { font-size: 2rem; }
 }
+
+/* Стиль для убегающей кнопки (когда она в режиме absolute) */
+#noBtn.running {
+  position: fixed !important;
+  z-index: 9999;
+  transition: left 0.15s ease, top 0.15s ease, transform 0.15s ease !important;
+}
   </style>
 </head>
 <body>
 
   <!-- СТРАНИЦА 1: ВОПРОС -->
   <div class="card" id="page1">
-    <h1>💕 Для моей любимой Ксюши 💕</h1>
+    <h1>Для моей любимой Ксюши 💕</h1>
     <h2>Будешь со мной встречаться? 😉</h2>
     <div class="buttons">
       <button class="yes" onclick="goNext()">Да! 🥰</button>
@@ -265,7 +270,7 @@ h2 {
       <img src="IMG_3276.jpg" alt="Фото 3" style="--r:-2deg" onerror="this.src='https://via.placeholder.com/150/ffb6c1/ffffff?text=❤️'">
       <img src="IMG_3894.jpg" alt="Фото 4" style="--r:5deg" onerror="this.src='https://via.placeholder.com/150/ffb6c1/ffffff?text=❤️'">
     </div>
-    <div class="bottom-text">✨ Ты сделала меня счастливым! ✨</div>
+    <div class="bottom-text"> УРАААААА 🥳🥳🥳</div>
     <div id="typedText" class="bottom-text"></div>
   </div>
 
@@ -282,52 +287,41 @@ h2 {
   const page1 = document.getElementById('page1');
   const page2 = document.getElementById('page2');
   const finale = document.getElementById('finale');
-  const buttonsContainer = document.querySelector('.buttons');
   
   // Флаг для ускорения сердечек
   let heartBoost = false;
+  // Флаг, что кнопка в режиме побега
+  let isRunning = false;
   
-  // ===== УСТАНОВКА НАЧАЛЬНОЙ ПОЗИЦИИ (РЯДОМ С КНОПКОЙ ДА) =====
-  function setInitialPosition() {
-    if (page1.style.display === 'none' || page1.classList.contains('fade-out')) return;
-    if (!yesBtn || !buttonsContainer) return;
-    
-    // Получаем позицию кнопки "Да" относительно контейнера
-    const containerRect = buttonsContainer.getBoundingClientRect();
-    const yesRect = yesBtn.getBoundingClientRect();
-    
-    // Рассчитываем позицию для кнопки "Нет" справа от "Да"
-    // Относительно контейнера .buttons
-    const relativeLeft = (yesRect.right - containerRect.left) + 20; // 20px отступ
-    
-    // Устанавливаем абсолютную позицию внутри контейнера
-    noBtn.style.left = relativeLeft + 'px';
-    noBtn.style.top = '0'; // Выравниваем по верхнему краю
-    noBtn.style.transform = 'none';
-  }
-  
-  // ===== УБЕГАЮЩАЯ КНОПКА (ТОЛЬКО ВНУТРИ КОНТЕЙНЕРА) =====
+  // ===== УБЕГАЮЩАЯ КНОПКА =====
   function runAway() {
     // Если страница 1 скрыта — ничего не делаем
     if (page1.style.display === 'none' || page1.classList.contains('fade-out')) return;
-    if (!buttonsContainer) return;
     
-    // Получаем размеры контейнера
-    const containerRect = buttonsContainer.getBoundingClientRect();
+    // Если кнопка ещё не в режиме побега - переключаем
+    if (!isRunning) {
+      // Запоминаем исходное положение (нужно для возврата? но мы не возвращаем)
+      isRunning = true;
+      noBtn.classList.add('running');
+      
+      // Устанавливаем начальную позицию для режима absolute/fixed
+      const rect = noBtn.getBoundingClientRect();
+      noBtn.style.left = rect.left + 'px';
+      noBtn.style.top = rect.top + 'px';
+    }
     
-    // Отступы от краев контейнера
-    const padding = 5;
+    // Отступы от края
+    const padding = 15;
     
-    // Максимальные координаты внутри контейнера
-    const maxX = containerRect.width - noBtn.offsetWidth - padding;
-    const maxY = containerRect.height - noBtn.offsetHeight - padding;
+    // Максимальные координаты
+    const maxX = window.innerWidth - noBtn.offsetWidth - padding;
+    const maxY = window.innerHeight - noBtn.offsetHeight - padding;
     
-    // Генерируем случайную позицию ВНУТРИ контейнера
+    // Генерация случайной позиции
     const x = Math.max(padding, Math.min(maxX, Math.random() * maxX));
     const y = Math.max(padding, Math.min(maxY, Math.random() * maxY));
     
-    // Применяем позицию (left/top относительно контейнера)
-    noBtn.style.transition = 'left 0.15s ease, top 0.15s ease, transform 0.15s ease';
+    // Применяем позицию
     noBtn.style.left = x + 'px';
     noBtn.style.top = y + 'px';
     
@@ -349,28 +343,13 @@ h2 {
   // Дополнительно убегаем при приближении курсора
   noBtn.addEventListener('mouseenter', runAway);
   
-  // ===== ПРИ ИЗМЕНЕНИИ РАЗМЕРА ОКНА =====
-  window.addEventListener('resize', function() {
-    if (page1.style.display !== 'none' && !page1.classList.contains('fade-out')) {
-      setInitialPosition();
-    }
-  });
-  
-  // ===== ПОСЛЕ ЗАГРУЗКИ СТРАНИЦЫ =====
-  window.addEventListener('load', function() {
-    // Небольшая задержка для корректного расчета
-    setTimeout(setInitialPosition, 100);
-    setTimeout(setInitialPosition, 300);
-    setTimeout(setInitialPosition, 600);
-  });
-  
   // ===== ПЕРЕКЛЮЧЕНИЕ НА СТРАНИЦУ 2 =====
   window.goNext = function() {
     // Запускаем исчезновение первой страницы
     page1.classList.add('fade-out');
     heartBoost = true; // Ускоряем сердечки
     
-    // Прячем кнопку "Нет" сразу
+    // Прячем кнопку "Нет"
     noBtn.style.display = 'none';
     
     // Через 600мс переключаем страницы
@@ -398,7 +377,7 @@ h2 {
       if (charIndex < loveText.length) {
         typedEl.innerHTML += loveText.charAt(charIndex);
         charIndex++;
-        setTimeout(type, 50); // Скорость печати
+        setTimeout(type, 50);
       } else {
         // После окончания текста показываем финал
         setTimeout(() => {
@@ -422,7 +401,6 @@ h2 {
     
     document.body.appendChild(heart);
     
-    // Удаляем через 8 секунд
     setTimeout(() => {
       if (heart.parentNode) heart.remove();
     }, 8000);
