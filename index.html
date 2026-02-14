@@ -199,6 +199,10 @@ const noBtn = document.getElementById('noBtn');
 
 // === NO BUTTON RUNS AWAY ===
 noBtn.addEventListener('mouseenter', moveNo);
+noBtn.addEventListener('touchstart', function(e) {
+  e.preventDefault(); // предотвращаем всплытие и клик
+  moveNo();
+});
 
 function moveNo() {
   const offsetX = Math.random() * 260 - 130;
