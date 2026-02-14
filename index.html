@@ -167,18 +167,21 @@ button:hover {
   100% { transform: scale(1); }
 }
     
-/* Для мобильных устройств - убираем задержки при касании */
-.no {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  cursor: pointer; /* явно указываем курсор */
+/* Фиксим позиционирование кнопки "Нет" */
+#noBtn {
+  position: fixed !important;
+  z-index: 1000;
 }
 
-/* На телефонах кнопка не должна иметь hover-эффект, который мешает */
-@media (max-width: 768px) {
-  .no:hover {
-    transform: none !important;
-  }
+/* Убираем лишние трансформации */
+.no {
+  transition: all 0.2s ease !important;
+}
+
+/* Кнопка "Да" остается на месте */
+.yes {
+  position: relative;
+  z-index: 1;
 }
     
 </style>
@@ -210,37 +213,65 @@ button:hover {
 
 <script>
 const noBtn = document.getElementById('noBtn');
+const yesBtn = document.querySelector('.yes');
 const page1 = document.getElementById('page1');
 
-// === ПРОСТАЯ И НАДЕЖНАЯ ФУНКЦИЯ ===
-function moveNo() {
-  // Если первая страница скрыта - не двигаем кнопку
+// === ПОЗИЦИОНИРУЕМ КНОПКУ "НЕТ" РЯДОМ С "ДА" (как в рабочем примере) ===
+function positionButtons() {
   if (page1.style.display === 'none') return;
   
-  // Случайные координаты в пределах экрана
-  const x = Math.random() * (window.innerWidth - 150);
-  const y = Math.random() * (window.innerHeight - 100);
+  const rect = yesBtn.getBoundingClientRect();
   
-  // Применяем новую позицию
+  // Ставим кнопку "Нет" точно справа от кнопки "Да"
   noBtn.style.position = 'fixed';
-  noBtn.style.left = x + 'px';
-  noBtn.style.top = y + 'px';
-  noBtn.style.transform = 'none'; // убираем translate
+  noBtn.style.left = (rect.right + 20) + 'px';
+  noBtn.style.top = rect.top + 'px';
+  noBtn.style.transform = 'none';
+  noBtn.style.transition = 'all 0.2s ease';
 }
 
-// === ДЛЯ КОМПЬЮТЕРА ===
-noBtn.addEventListener('mouseenter', moveNo);
+// === УБЕГАЮЩАЯ КНОПКА (ТОЧНО КАК В РАБОЧЕМ ПРИМЕРЕ) ===
+function runAway() {
+  if (page1.style.display === 'none') return;
+  
+  // Вычисляем безопасные границы
+  const padding = 10;
+  const maxX = window.innerWidth - noBtn.offsetWidth - padding;
+  const maxY = window.innerHeight - noBtn.offsetHeight - padding;
 
-// === ДЛЯ ТЕЛЕФОНА (И ТЕЛЕГРАМА) ===
+  // Генерируем случайные координаты
+  const x = Math.max(padding, Math.min(maxX, Math.random() * maxX));
+  const y = Math.max(padding, Math.min(maxY, Math.random() * maxY));
+
+  // Плавно перемещаем кнопку
+  noBtn.style.transition = 'all 0.2s ease';
+  noBtn.style.left = x + "px";
+  noBtn.style.top = y + "px";
+  
+  // Эффект "испуга"
+  noBtn.style.transform = 'scale(0.95)';
+  setTimeout(() => {
+    noBtn.style.transform = 'scale(1)';
+  }, 200);
+}
+
+// === СОБЫТИЯ (ТОЧНО КАК В РАБОЧЕМ ПРИМЕРЕ) ===
+noBtn.addEventListener('mouseover', runAway);
+noBtn.addEventListener('mousedown', runAway);
 noBtn.addEventListener('touchstart', function(e) {
-  e.preventDefault(); // критично важно для Telegram
-  moveNo();
+  e.preventDefault();
+  runAway();
 });
 
-// === ДЛЯ ВСЕХ СЛУЧАЕВ ===
-noBtn.addEventListener('click', function(e) {
-  e.preventDefault();
-  moveNo();
+// === ПРИ ИЗМЕНЕНИИ РАЗМЕРА ОКНА ===
+window.addEventListener('resize', function() {
+  positionButtons();
+});
+
+// === СТАРТОВАЯ ПОЗИЦИЯ ===
+window.addEventListener('load', function() {
+  setTimeout(positionButtons, 100);
+  setTimeout(positionButtons, 500);
 });
 
 // === PAGE SWITCH ===
@@ -256,7 +287,7 @@ function goNext() {
   }, 600);
 }
 
-// === ОСТАЛЬНОЙ КОД БЕЗ ИЗМЕНЕНИЙ ===
+// === ВСЁ ОСТАЛЬНОЕ БЕЗ ИЗМЕНЕНИЙ ===
 let heartBoost = false;
 
 setInterval(() => {
@@ -267,6 +298,7 @@ setInterval(() => {
   heart.style.fontSize = (heartBoost ? 30 : 22) + 'px';
   heart.style.animationDuration =
     (heartBoost ? 2 : 4) + Math.random() * 2 + 's';
+
   document.body.appendChild(heart);
   setTimeout(() => heart.remove(), 7000);
 }, 300);
