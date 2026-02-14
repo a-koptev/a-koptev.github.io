@@ -89,29 +89,14 @@ h2 {
 /* КОНТЕЙНЕР КНОПОК */
 .buttons {
   display: flex;
-  justify-content: space-between; /* Кнопки по краям */
+  justify-content: center;
   align-items: center;
   min-height: 70px;
   position: relative;
-  width: 100%;
-  gap: 10px;
+  gap: 20px; /* Расстояние между кнопками */
 }
 
-/* ЛЕВАЯ ЧАСТЬ - всегда содержит кнопку ДА */
-.left-buttons {
-  display: flex;
-  justify-content: flex-start;
-  flex: 1;
-}
-
-/* ПРАВАЯ ЧАСТЬ - резервирует место для кнопки НЕТ */
-.right-buttons {
-  display: flex;
-  justify-content: flex-end;
-  flex: 1;
-}
-
-/* КНОПКА ДА - ВСЕГДА СЛЕВА */
+/* КНОПКА ДА - СТАТИЧНАЯ, В ПОТОКЕ */
 .yes {
   width: 140px;
   height: 54px;
@@ -125,7 +110,9 @@ h2 {
   box-shadow: 0 10px 25px #ff3b7d80;
   transition: all 0.25s ease;
   letter-spacing: 0.5px;
-  flex-shrink: 0;
+  position: relative; /* Обычный поток */
+  z-index: 10;
+  flex-shrink: 0; /* Не сжимается */
 }
 
 .yes:hover {
@@ -133,7 +120,7 @@ h2 {
   transform: translateY(-3px);
 }
 
-/* КНОПКА НЕТ - В ПРАВОЙ ЧАСТИ */
+/* КНОПКА НЕТ - ТОЖЕ В ПОТОКЕ, НО БУДЕТ УБЕГАТЬ ЧЕРЕЗ JS */
 #noBtn {
   width: 140px;
   height: 54px;
@@ -148,14 +135,9 @@ h2 {
   box-shadow: 0 8px 20px rgba(0,0,0,0.2);
   letter-spacing: 0.5px;
   transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-/* Стиль для убегающей кнопки */
-#noBtn.running {
-  position: fixed !important;
-  z-index: 9999;
-  transition: left 0.15s ease, top 0.15s ease, transform 0.15s ease !important;
+  position: relative; /* Обычный поток */
+  z-index: 10;
+  flex-shrink: 0; /* Не сжимается */
 }
 
 /* ПОЛЯРОИДНЫЕ ФОТО */
@@ -258,6 +240,13 @@ h2 {
   
   .final-text { font-size: 2rem; }
 }
+
+/* Стиль для убегающей кнопки (когда она в режиме absolute) */
+#noBtn.running {
+  position: fixed !important;
+  z-index: 9999;
+  transition: left 0.15s ease, top 0.15s ease, transform 0.15s ease !important;
+}
   </style>
 </head>
 <body>
@@ -267,25 +256,20 @@ h2 {
     <h1>Для моей любимой Ксюши 💕</h1>
     <h2>Будешь со мной встречаться? 😉</h2>
     <div class="buttons">
-      <div class="left-buttons">
-        <button class="yes" onclick="goNext()">Да! 🥰</button>
-      </div>
-      <div class="right-buttons">
-        <button class="no" id="noBtn">Нет 😞</button>
-      </div>
+      <button class="yes" onclick="goNext()">Да! 🥰</button>
+      <button class="no" id="noBtn">Нет 😞</button>
     </div>
   </div>
 
   <!-- СТРАНИЦА 2: ФОТО И ПРИЗНАНИЕ -->
   <div class="card" id="page2" style="display:none;">
-    <h1>💞 Ксюша, спасибо! 💞</h1>
     <div class="photos">
       <img src="IMG_2434.JPG" alt="Фото 1" style="--r:-4deg" onerror="this.src='https://via.placeholder.com/150/ffb6c1/ffffff?text=❤️'">
       <img src="IMG_3112.JPG" alt="Фото 2" style="--r:3deg" onerror="this.src='https://via.placeholder.com/150/ffb6c1/ffffff?text=❤️'">
       <img src="IMG_3276.jpg" alt="Фото 3" style="--r:-2deg" onerror="this.src='https://via.placeholder.com/150/ffb6c1/ffffff?text=❤️'">
       <img src="IMG_3894.jpg" alt="Фото 4" style="--r:5deg" onerror="this.src='https://via.placeholder.com/150/ffb6c1/ffffff?text=❤️'">
     </div>
-    <div class="bottom-text">УРАААААА 🥳🥳</div>
+    <div class="bottom-text"> УРАААААА 🥳🥳🥳</div>
     <div id="typedText" class="bottom-text"></div>
   </div>
 
@@ -298,6 +282,7 @@ h2 {
 (function() {
   // ===== ЭЛЕМЕНТЫ =====
   const noBtn = document.getElementById('noBtn');
+  const yesBtn = document.querySelector('.yes');
   const page1 = document.getElementById('page1');
   const page2 = document.getElementById('page2');
   const finale = document.getElementById('finale');
@@ -314,14 +299,14 @@ h2 {
     
     // Если кнопка ещё не в режиме побега - переключаем
     if (!isRunning) {
+      // Запоминаем исходное положение (нужно для возврата? но мы не возвращаем)
       isRunning = true;
       noBtn.classList.add('running');
       
-      // Запоминаем текущую позицию
+      // Устанавливаем начальную позицию для режима absolute/fixed
       const rect = noBtn.getBoundingClientRect();
       noBtn.style.left = rect.left + 'px';
       noBtn.style.top = rect.top + 'px';
-      noBtn.style.width = rect.width + 'px'; // Фиксируем ширину
     }
     
     // Отступы от края
@@ -353,20 +338,25 @@ h2 {
     e.preventDefault();
     runAway();
   });
+  
+  // Дополнительно убегаем при приближении курсора
   noBtn.addEventListener('mouseenter', runAway);
   
   // ===== ПЕРЕКЛЮЧЕНИЕ НА СТРАНИЦУ 2 =====
   window.goNext = function() {
     // Запускаем исчезновение первой страницы
     page1.classList.add('fade-out');
-    heartBoost = true;
+    heartBoost = true; // Ускоряем сердечки
     
     // Прячем кнопку "Нет"
     noBtn.style.display = 'none';
     
+    // Через 600мс переключаем страницы
     setTimeout(() => {
       page1.style.display = 'none';
       page2.style.display = 'block';
+      
+      // Запускаем печать текста
       typeWriterEffect();
     }, 600);
   };
@@ -388,6 +378,7 @@ h2 {
         charIndex++;
         setTimeout(type, 50);
       } else {
+        // После окончания текста показываем финал
         setTimeout(() => {
           finale.classList.add('show');
         }, 1000);
