@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Любимке</title>
+  <style>
+* { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #ffb6c1, #ff5f9e);
+  overflow: hidden;
+}
+
+/* === FLOATING HEARTS BACKGROUND === */
+.heart {
+  position: absolute;
+  bottom: -40px;
+  font-size: 22px;
+  animation: floatUp linear infinite;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+@keyframes floatUp {
+  from { transform: translateY(0) scale(1); opacity: 0.8; }
+  to { transform: translateY(-120vh) scale(1.6); opacity: 0; }
+}
+
+.card {
+  background: white;
+  border-radius: 26px;
+  padding: 26px 22px 34px;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+  position: relative;
+  z-index: 2;
+  animation: pop 0.6s ease;
+}
+
+@keyframes pop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+h1 {
+  font-size: 1.3rem;
+  color: #ff3b7d;
+  margin-bottom: 12px;
+}
+
+h2 {
+  font-size: 1.1rem;
+  margin-bottom: 26px;
+}
+
+/* === BUTTONS === */
+.buttons {
+  display: flex;
+  gap: 22px;
+  justify-content: center;
+  position: relative;
+}
+
+button {
+  width: 150px;
+  height: 52px;
+  border-radius: 999px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+.yes {
+  background: linear-gradient(135deg, #ff5f9e, #ff2f6d);
+  color: white;
+  box-shadow: 0 12px 26px rgba(255, 47, 109, 0.45);
+}
+
+.no {
+  background: linear-gradient(135deg, #ffe1ec, #ffd1e1);
+  color: #ff2f6d;
+  box-shadow: 0 12px 26px rgba(0,0,0,0.18);
+}
+
+/* === PHOTOS (POLAROID) === */
+.photos {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin: 20px 0;
+}
+
+.photos img {
+  width: 100%;
+  background: white;
+  padding: 8px 8px 26px;
+  border-radius: 14px;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+  object-fit: cover;
+  aspect-ratio: 1 / 1;
+  transform: rotate(var(--r));
+}
+
+.bottom-text {
+  margin-top: 12px;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 1.15rem; }
+  h2 { font-size: 1rem; }
+}
+
+.card {
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.card.fade-out {
+  opacity: 0;
+  transform: scale(0.92);
+}
+#finale {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle, #ff5f9e, #ff2f6d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1s ease;
+  z-index: 10;
+}
+
+#finale.show {
+  opacity: 1;
+}
+
+.final-text {
+  color: white;
+  font-size: 2.3rem;
+  font-weight: 700;
+  animation: pulse 1.4s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+</style>
+</head>
+<body>
+
+  <!-- PAGE 1 -->
+  <div class="card" id="page1">
+    <h1>Для моей любимой Ксюши 💋</h1>
+    <h2>Будешь со мной встречаться?🥰</h2>
+    <div class="buttons">
+      <button class="yes" onclick="goNext()">Да!💘</button>
+      <button class="no" id="noBtn">Нет(😔</button>
+    </div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="card" id="page2" style="display:none;">
+    <h1>Для моей любимой Ксюши 💋</h1>
+    <div class="photos">
+      <img src="IMG_2434.JPG" style="--r:-6deg">
+      <img src="IMG_3112.JPG" style="--r:4deg">
+      <img src="IMG_3276.jpg" style="--r:-2deg">
+      <img src="IMG_3894.jpg" style="--r:5deg">
+    </div>
+    <div class="bottom-text">УРААААААА 🥳🎉</div>
+    <div class="bottom-text" id="typedText"></div>
+  </div>
+
+<script>
+const noBtn = document.getElementById('noBtn');
+
+// === NO BUTTON RUNS AWAY ===
+noBtn.addEventListener('mouseenter', moveNo);
+
+function moveNo() {
+  const offsetX = Math.random() * 260 - 130;
+  const offsetY = Math.random() * 160 - 80;
+  noBtn.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+}
+
+// === PAGE SWITCH ===
+function goNext() {
+  const page1 = document.getElementById('page1');
+  const page2 = document.getElementById('page2');
+
+  page1.classList.add('fade-out');
+  heartBoost = true;
+
+  setTimeout(() => {
+    page1.style.display = 'none';
+    page2.style.display = 'block';
+    typeText();
+  }, 600);
+}
+
+// === FLOATING HEARTS GENERATOR ===
+let heartBoost = false;
+
+setInterval(() => {
+  const heart = document.createElement('div');
+  heart.className = 'heart';
+  heart.innerText = '❤';
+  heart.style.left = Math.random() * 100 + 'vw';
+  heart.style.fontSize = (heartBoost ? 30 : 22) + 'px';
+  heart.style.animationDuration =
+    (heartBoost ? 2 : 4) + Math.random() * 2 + 's';
+
+  document.body.appendChild(heart);
+  setTimeout(() => heart.remove(), 7000);
+}, 300);
+
+
+const text = 'В этот день, когда все говорят о любви ❤️ мне хочется сказать спасибо, что ты просто есть 🌹 С тобой даже обычный день становится праздником ✨ а сегодня хочется обнимать тебя особенно крепко 🤗 Ты — мое тепло и мое счастье 🥰 С Днем всех влюбленных, родная 🌷💋'
+let i = 0;
+
+function typeText() {
+  const el = document.getElementById('typedText');
+  el.innerHTML = '';
+  i = 0;
+
+  const interval = setInterval(() => {
+    el.innerHTML += text.charAt(i);
+    i++;
+    if (i >= text.length) {
+      clearInterval(interval);
+      setTimeout(showFinale, 1200);
+    }
+  }, 60);
+}
+
+</script>
+<div id="finale">
+  <div class="final-text">Я тебя люблю ❤️</div>
+</div>
+</body>
+</html>
