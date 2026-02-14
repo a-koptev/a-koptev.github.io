@@ -197,14 +197,26 @@ button:hover {
 <script>
 const noBtn = document.getElementById('noBtn');
 
-// === NO BUTTON RUNS AWAY ===
-noBtn.addEventListener('mouseover', moveNo);
-
 function moveNo() {
   const offsetX = Math.random() * 260 - 130;
   const offsetY = Math.random() * 160 - 80;
   noBtn.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
 }
+
+// Для компьютера (наведение)
+noBtn.addEventListener('mouseenter', moveNo);
+
+// Для телефона (касание)
+noBtn.addEventListener('touchstart', function(e) {
+  e.preventDefault();  // ОБЯЗАТЕЛЬНО!
+  moveNo();
+});
+
+// Для телефона (клик - на всякий случай)
+noBtn.addEventListener('click', function(e) {
+  e.preventDefault();
+  moveNo();
+});
 
 // === PAGE SWITCH ===
 function goNext() {
