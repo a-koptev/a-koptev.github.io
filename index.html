@@ -12,6 +12,7 @@
       color: #fff;
       text-align: center;
       overflow: hidden;
+      padding-top: 60px; /* добавлен отступ сверху */
     }
 
     .container {
@@ -67,17 +68,16 @@
   </style>
 </head>
 <body>
+
 <div class="container">
   <h1>🎉 С Днём Рождения! 🎉</h1>
   <p id="name">Дорогой друг!</p>
   <button onclick="showMessage()">Нажми на меня 🎁</button>
   <div class="hidden-message" id="message">
     Желаю тебе счастья, здоровья и исполнения всех мечт! 🚀
+    <a href="page2.html">Перейти на вторую страницу</a>
   </div>
 </div>
-
-
-<a href="page2.html">Перейти на вторую страницу</a>
 
 <script>
   function showMessage() {
